@@ -1,0 +1,36 @@
+﻿version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: dictionary-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dictionarydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dictionary.API/Dockerfile
+    container_name: dictionary-api
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Host=db;Database=dictionarydb;Username=postgres;Password=postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - dictionary-network
+
+volumes:
+  pgdata:
+
+networks:
+  dictionary-network:
