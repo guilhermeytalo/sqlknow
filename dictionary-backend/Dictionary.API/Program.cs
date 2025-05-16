@@ -96,12 +96,24 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<IDictionaryService, DictionaryService>();
+builder.Services.AddScoped<WordImporterService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbInitializer.Seed(db);
+    
+    var importer = scope.ServiceProvider.GetRequiredService<WordImporterService>();
+    await importer.ImportWordsAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
