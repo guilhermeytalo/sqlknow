@@ -1,3 +1,5 @@
+using Polly;
+using System.Net.Sockets;
 using System.Text;
 using Dictionary.Application.Interfaces;
 using Dictionary.Infrastructure.Persistence;
@@ -7,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 
 DotNetEnv.Env.Load();
 
@@ -44,8 +47,8 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme \r\n\r\n" +
-        "Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\n" +
-            "Example: \"Bearer 12345abcdef\"",
+                      "Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\n" +
+                      "Example: \"Bearer 12345abcdef\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -92,11 +95,14 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// Log connection string (for debugging only - remove in production)
+var connectionString = builder.Configuration.GetConnectionString("Default");
+Console.WriteLine($"Using connection string: {connectionString}");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-builder.Services.Configure<RouteOptions>(options => {
-    options.LowercaseUrls = true;
-});
+    options.UseNpgsql(connectionString));
+
+builder.Services.Configure<RouteOptions>(options => { options.LowercaseUrls = true; });
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDictionaryService, DictionaryService>();
 builder.Services.AddScoped<WordImporterService>();
@@ -108,20 +114,14 @@ builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbInitializer.Seed(db);
-    
-    var importer = scope.ServiceProvider.GetRequiredService<WordImporterService>();
-    await importer.ImportWordsAsync();
-}
+// Initialize the database with retries
+await InitializeDatabaseAsync(app);
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI(c => {
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dictionary API v1");
+    c.RoutePrefix = "swagger"; // Makes Swagger available at /swagger
+});
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -130,3 +130,41 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Database initialization function with retry logic
+async Task InitializeDatabaseAsync(WebApplication app)
+{
+    // Define a retry policy for database operations
+    var retryPolicy = Policy
+        .Handle<NpgsqlException>()
+        .Or<SocketException>()
+        .WaitAndRetryAsync(
+            retryCount: 5,
+            sleepDurationProvider: retryAttempt =>
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // Exponential backoff
+            onRetry: (exception, timeSpan, retryCount, context) =>
+            {
+                Console.WriteLine(
+                    $"Retry {retryCount} encountered an error: {exception.Message}. Waiting {timeSpan} before next retry.");
+            });
+
+    await retryPolicy.ExecuteAsync(async () =>
+    {
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        // Ensure database is created
+        await dbContext.Database.EnsureCreatedAsync();
+
+        Console.WriteLine("Database connected successfully, proceeding with initialization...");
+
+        // Seed the database
+        DbInitializer.Seed(dbContext);
+
+        // Import words
+        var importer = scope.ServiceProvider.GetRequiredService<WordImporterService>();
+        await importer.ImportWordsAsync();
+
+        Console.WriteLine("Database initialization completed successfully!");
+    });
+}

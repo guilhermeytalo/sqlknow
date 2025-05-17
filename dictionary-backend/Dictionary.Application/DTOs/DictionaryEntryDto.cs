@@ -4,7 +4,7 @@ namespace Dictionary.Application.DTOs;
 
 public class DictionaryEntryDto
 {
-    public string Word { get; set; }
+    public string? Word { get; set; }
     public string Phonetic { get; set; }
     public List<Phonetic> Phonetics { get; set; }
     public List<Meaning> Meanings { get; set; }

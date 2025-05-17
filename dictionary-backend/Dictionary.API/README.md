@@ -1,227 +1,150 @@
-### Back-End:
+📋 Prerequisites
+Docker installed [Download Docker](https://www.docker.com/get-started)
 
-Nessa etapa você deverá construir uma API Restful com as melhores práticas de desenvolvimento.
+Docker Compose (usually included with Docker Desktop)
 
-**Obrigatório 1** - Você deverá atender aos seguintes casos de uso:
+🚀 Quick Start
+Clone the repository:
 
-- Como usuário, devo ser capaz de realizar login com usuário e senha
-- Como usuário, devo ser capaz de visualizar a lista de palavras do dicionário
-- Como usuário, devo ser capaz de guardar no histórico palavras já visualizadas
-- Como usuário, devo ser capaz de visualizar o histórico de palavras já visualizadas
-- Como usuário, deve ser capaz de guardar uma palavra como favorita
-- Como usuário, deve ser capaz de apagar uma palavra favorita
-- Internamente, a API deve fazer proxy da API Free Dictionary, pois assim o front irá acessar somente a sua API
+bash
+git clone https://github.com/guilhermeytalo/sqlknow.git
+cd dictionary-backend
 
-**Obrigatório 2** - Você deverá desenvolver as seguintes rotas com suas requisições e respostas:
+Generate the JWT secret key for .env.prod:
+```bash
+# Linux/macOS:
+openssl rand -base64 32
 
-<details open>
-<summary>[GET] /</summary>
-<p>
-Retornar a mensagem "Fullstack Challenge 🏅 - Dictionary"
-</p>
-
-```json
-{
-    "message": "Fullstack Challenge 🏅 - Dictionary"
-}
-```
-</details>
-<details open>
-<summary>[POST] /auth/signup</summary>
-
-```json
-{
-    "name": "User 1",
-    "email": "example@email.com",
-    "password": "test"
-}
+# Windows (PowerShell):
+[System.Convert]::ToBase64String((1..32 | ForEach-Object { [byte](Get-Random -Minimum 0 -Maximum 255) }))
 ```
 
-```json
-{
-    "id": "f3a10cec013ab2c1380acef",
-    "name": "User 1",
-    "token": "Bearer JWT.Token"
-}
-```
-</details>
-<details open>
-<summary>[POST] /auth/signin</summary>
+Start the containers:
+```bash
+docker-compose up -d
 
-```json
-{
-    "email": "example@email.com",
-    "password": "test"
-}
-```
+# This will launch:
 
-```json
-{
-    "id": "f3a10cec013ab2c1380acef",
-    "name": "User 1",
-    "token": "Bearer JWT.Token"
-}
-```
-</details>
-<details open>
-<summary>[GET] /entries/en</summary>
-<p>
-Retornar a lista de palavras do dicionário, com paginação e suporte a busca. O endpoint de paginação de uma busca hipotética deve retornar a seguinte estrutura:
-<br/>
-[GET]/entries/en?search=fire&limit=4
-</p>
+PostgreSQL database (dictionary-postgres)
+Dictionary API (dictionary-api)
 
-```json
-{
-    "results": [
-        "fire",
-        "firefly",
-        "fireplace",
-        "fireman"
-    ],
-    "totalDocs": 20,
-    "page": 1,
-    "totalPages": 5, 
-    "hasNext": true,
-    "hasPrev": false
-}
-```
-</details>
-<details open>
-<summary>[GET] /entries/en/:word</summary>
-<p>
-Retornar as informações da palavra especificada e registra o histórico de acesso.
-</p>
-</details>
-<details open>
-<summary>[POST] /entries/en/:word/favorite</summary>
-<p>
-Salva a palavra na lista de favoritas (retorno de dados no body é opcional)
-</p> 
-</details>
-<details open>
-<summary>[DELETE] /entries/en/:word/unfavorite</summary>
-<p>
-Remover a palavra da lista de favoritas (retorno de dados no body é opcional)
-</p>
-</details> 
-<details open>
-<summary>[GET] /user/me</summary>
-<p>
-Retornar o perfil do usúario
-</p>
-</details> 
-<details open>
-<summary>[GET] /user/me/history</summary>
-<p>
-Retornar a lista de palavras visitadas
-</p>
+# Verify services are running:
 
-```json
-{
-    "results": [
-        {
-            "word": "fire",
-            "added": "2022-05-05T19:28:13.531Z"
-        },
-        {
-            "word": "firefly",
-            "added": "2022-05-05T19:28:44.021Z"
-        },
-        {
-            "word": "fireplace",
-            "added": "2022-05-05T19:29:28.631Z"
-        },
-        {
-            "word": "fireman",
-            "added": "2022-05-05T19:30:03.711Z"
-        }
-    ],
-    "totalDocs": 20,
-    "page": 2,
-    "totalPages": 5,
-    "hasNext": true,
-    "hasPrev": true
-}
-```
-</details> 
-<details open>
-<summary>[GET] /user/me/favorites</summary>
-<p>
-Retornar a lista de palavras marcadas como favoritas
-</p>
+docker ps
+# Expected output:
 
-```json
-{
-    "results": [
-        {
-            "word": "fire",
-            "added": "2022-05-05T19:30:23.928Z"
-        },
-        {
-            "word": "firefly",
-            "added": "2022-05-05T19:30:24.088Z"
-        },
-        {
-            "word": "fireplace",
-            "added": "2022-05-05T19:30:28.963Z"
-        },
-        {
-            "word": "fireman",
-            "added": "2022-05-05T19:30:33.121Z"
-        }
-    ],
-    "totalDocs": 20,
-    "page": 2,
-    "totalPages": 5,
-    "hasNext": true,
-    "hasPrev": true
-}
+CONTAINER ID   IMAGE             ...   PORTS                    NAMES
+abc123        dictionary-api    ...   0.0.0.0:8080->8080/tcp   dictionary-api
+xyz456        postgres:16       ...   0.0.0.0:5433->5432/tcp   dictionary-postgres
 ```
 
-</details>
+# 🔧 Connection Details
 
-Além disso, os endpoints devem utilizar os seguintes códigos de status:
-- 200: sucesso com body ou sem body
-- 204: sucesso sem body
-- 400: mensagem de erro em formato humanizado, ou seja, sem informações internas e códigos de erro:
+## 🌐 API Endpoints
+Local access: http://localhost:8080
+Swagger UI (if enabled): http://localhost:8080/swagger
 
-```json
-{
-    "message": "Error message"
-}
+## 🐘 PostgreSQL Access
+Parameter	Value
+Host	localhost
+Port	5433 (external)
+Database	dictionarydb
+Username	postgres
+Password	postgres
+Internal Port	5432 (container-to-container)
+
+# 🛠️ Common Commands
+
+## 🐳 Docker Management
+```bash 
+#Command	Description
+docker-compose up -d	Start services in background
+docker-compose down	Stop and remove containers
+docker-compose logs -f	View live logs
+docker exec -it dictionary-postgres psql -U postgres	Access DB shell
 ```
 
-**Obrigatório 3** - Você deve criar um script para baixar a lista de palavras do repositório e importar estas palavras para o banco de dados. A Free Dictionary API não possui endpoint com a lista de palavras. Para criar este endpoint será necessário alimentar o seu banco de dados com o [arquivo existente dentro do projeto no Github](https://github.com/meetDeveloper/freeDictionaryAPI/tree/master/meta/wordList).
+## 🔄 Database Operations
+```bash
+# Backup database
+docker exec dictionary-postgres pg_dump -U postgres dictionarydb > backup.sql
 
-**Diferencial 1** - Descrever a documentação da API utilizando o conceito de Open API 3.0;
+# Restore database
+cat backup.sql | docker exec -i dictionary-postgres psql -U postgres dictionarydb
 
-**Diferencial 2** - Escrever Unit Tests para os endpoints da API;
+🚨 Troubleshooting
+❌ "User does not exist" Error
+Recreate the user in Docker:
 
-**Diferencial 3** - Configurar Docker no Projeto para facilitar o Deploy da equipe de DevOps;
-
-**Diferencial 4** - Deploy em algum servidor, com ou sem automatização do CI.
-
-**Diferencial 5** - Implementar paginação com cursores ao inves de usar page e limit . Ao realizar este diferencial, o retorno dos endpoints deve possuir a seguinte estrutura:
-
-```json
-{
-    "results": [
-        "fire",
-        "firefly",
-        "fireplace",
-        "fireman"
-    ],
-    "totalDocs": 20,
-    "previous": "eyIkb2lkIjoiNTgwZmQxNmjJkOGI5In0",
-    "next": "eyIkb2lkIjoiNTgwZmQxNm1NjJkOGI4In0",
-    "hasNext": true,
-    "hasPrev": true,
-}
+docker exec -it dictionary-postgres psql -U postgres -c "CREATE USER postgres WITH SUPERUSER PASSWORD 'postgres';"
 ```
 
-**Diferencial 6** - Salvar em cache o resultado das requisições ao Free Dictionary API, para agilizar a resposta em caso de buscas com parâmetros repetidos. Sugestões são usar o Redis e/ou MongoDB;
+# 🔌 Connection Issues
+From host machine: Use localhost:5433
 
-O cache pode ser feito a guardar todo o corpo das respostas ou para guardar o resultado das queries do banco. Para identificar a presença de cache, será necessário adicionar os seguintes headers nas respostas:
-- x-cache: valores HIT (retornou dados em cache) ou MISS (precisou buscar no banco)
-- x-response-time: duração da requisição em milissegundos
+Between containers: Use db:5432
+
+# 🧹 Reset Everything
+```bash
+docker-compose down -v  # Removes containers AND volumes
+docker-compose up -d    # Fresh start
+📂 File Structure
+```
+dictionary-backend/
+├── Dictionary.API/
+│ ├── Controllers/
+│ │ ├── AuthController.cs
+│ │ ├── DictionaryController.cs
+│ │ ├── ReactController.cs
+│ │ └── UserController.cs
+│ ├── DTOs/
+│ │ ├── DictionaryEntryDto.cs
+│ │ ├── DictionaryResponseDto.cs
+│ │ ├── DictionarySearchResponseDto.cs
+│ │ ├── LoginDto.cs
+│ │ ├── RegisterDto.cs
+│ │ └── WordDto.cs
+│ ├── Interfaces/
+│ │ ├── IAuthService.cs
+│ │ └── IDictionaryService.cs
+│ ├── Properties/
+│ │ └── launchSettings.json
+│ ├── Services/
+│ │ ├── AuthService.cs
+│ │ └── DictionaryService.cs
+│ ├── appsettings.json
+│ ├── appsettings.Development.json
+│ ├── Dockerfile
+│ ├── Program.cs
+│ └── Dictionary.API.csproj
+│
+├── Dictionary.Domain/
+│ ├── Entities/
+│ │ ├── Favorite.cs
+│ │ ├── User.cs
+│ │ ├── Word.cs
+│ │ └── WordHistory.cs
+│ └── Dictionary.Domain.csproj
+│
+├── Dictionary.Infrastructure/
+│ ├── Migrations/
+│ │ ├── 202405161218563_InitialCreate.cs
+│ │ ├── 202405161218563_InitialCreate.Designer.cs
+│ │ ├── 20240517001117_AddFavoriteTable.cs
+│ │ ├── 20240517001117_AddFavoriteTable.Designer.cs
+│ │ └── AppDbContextModelSnapshot.cs
+│ ├── Persistence/
+│ │ ├── AppDbContext.cs
+│ │ ├── DbInitializer.cs
+│ │ └── DesignTimeDbContextFactory.cs
+│ └── Dictionary.Infrastructure.csproj
+│
+├── Dictionary.Tests/
+│ └── Dictionary.Tests.csproj
+│
+├── .dockerignore
+├── .gitignore
+├── docker-compose.yml
+├── global.json
+└── README.md
+```
