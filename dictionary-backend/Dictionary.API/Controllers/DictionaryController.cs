@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dictionary.API.Controllers;
 
 [ApiController]
-[Route("api/v2/entries")]
+[Route("entries")]
 public class DictionaryController : ControllerBase
 {
     private readonly IDictionaryService _dictionaryService;

@@ -12,4 +12,6 @@ public class AppDbContext : DbContext
     public DbSet<Word> Words => Set<Word>();
     
     public DbSet<WordHistory> WordHistories { get; set; }
+    public DbSet<Favorite> Favorites => Set<Favorite>();
+
 }
