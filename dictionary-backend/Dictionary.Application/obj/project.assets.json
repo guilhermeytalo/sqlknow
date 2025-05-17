@@ -1,30 +1,11 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {
-      "Dictionary.Domain/1.0.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "compile": {
-          "bin/placeholder/Dictionary.Domain.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/Dictionary.Domain.dll": {}
-        }
-      }
-    }
+    "net8.0": {}
   },
-  "libraries": {
-    "Dictionary.Domain/1.0.0": {
-      "type": "project",
-      "path": "../Dictionary.Domain/Dictionary.Domain.csproj",
-      "msbuildProject": "../Dictionary.Domain/Dictionary.Domain.csproj"
-    }
-  },
+  "libraries": {},
   "projectFileDependencyGroups": {
-    "net8.0": [
-      "Dictionary.Domain >= 1.0.0"
-    ]
+    "net8.0": []
   },
   "packageFolders": {
     "/Users/guilhermeytalo/.nuget/packages/": {}
@@ -50,11 +31,7 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
-          "projectReferences": {
-            "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.Domain/Dictionary.Domain.csproj": {
-              "projectPath": "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.Domain/Dictionary.Domain.csproj"
-            }
-          }
+          "projectReferences": {}
         }
       },
       "warningProperties": {
@@ -87,7 +64,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.408/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/Users/guilhermeytalo/.dotnet/sdk/8.0.406/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
