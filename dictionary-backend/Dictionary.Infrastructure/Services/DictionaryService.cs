@@ -109,13 +109,34 @@ public class DictionaryService : IDictionaryService
         await _context.SaveChangesAsync();
     }
     
-    public async Task<List<string>> GetFavoritesAsync(Guid userId)
+    public async Task<DictionarySearchResponseDto> GetFavoritesAsync(Guid userId, int page, int pageSize)
     {
-        var favorites = await _context.Favorites
+        var query = _context.Favorites
             .Where(f => f.UserId == userId)
-            .Select(f => f.Word)
+            .OrderByDescending(f => f.AddedAt);
+
+        var totalDocs = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalDocs / (double)pageSize);
+        var skip = (page - 1) * pageSize;
+
+        var favorites = await query
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(f => new 
+            {
+                word = f.Word,
+                added = f.AddedAt
+            })
             .ToListAsync();
 
-        return favorites;
+        return new DictionarySearchResponseDto
+        {
+            Results = favorites.Select(f => f.word).ToList(),
+            TotalDocs = totalDocs,
+            Page = page,
+            TotalPages = totalPages,
+            HasNext = page < totalPages,
+            HasPrev = page > 1
+        };
     }
 }

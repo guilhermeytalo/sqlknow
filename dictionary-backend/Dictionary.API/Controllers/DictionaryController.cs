@@ -49,21 +49,6 @@ public class DictionaryController : ControllerBase
         }
     }
     
-    [HttpGet("en/favorites")]
-    public async Task<IActionResult> GetFavorites()
-    {
-        try
-        {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var favorites = await _dictionaryService.GetFavoritesAsync(userId);
-            return Ok(favorites);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { message = "Error retrieving favorites", error = ex.Message });
-        }
-    }
-    
     [HttpPost("en/{word}/favorite")]
     public async Task<IActionResult> AddToFavorites(
         string word

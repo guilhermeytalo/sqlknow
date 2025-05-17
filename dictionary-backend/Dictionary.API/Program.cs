@@ -94,7 +94,9 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-
+builder.Services.Configure<RouteOptions>(options => {
+    options.LowercaseUrls = true;
+});
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IDictionaryService, DictionaryService>();
 builder.Services.AddScoped<WordImporterService>();
