@@ -80,9 +80,42 @@ public class DictionaryService : IDictionaryService
         };
     }
     
-    private int? GetLoggedInUserId()
+    public async Task AddToFavoritesAsync(string word, Guid userId)
     {
-        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
-        return userIdClaim != null ? int.Parse(userIdClaim.Value) : (int?)null;
+        var exists = await _context.Favorites.AnyAsync(f => f.UserId == userId && f.Word == word);
+
+        if (!exists)
+        {
+            _context.Favorites.Add(new Favorite
+            {
+                Word = word,
+                UserId = userId,
+                AddedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+        }
+    }
+    
+    public async Task RemoveFromFavoritesAsync(string word, Guid userId)
+    {
+        var favorite = await _context.Favorites
+            .FirstOrDefaultAsync(f => f.UserId == userId && f.Word == word);
+        
+        if (favorite == null)
+            throw new Exception("Word not in favorites");
+
+        _context.Favorites.Remove(favorite);
+        await _context.SaveChangesAsync();
+    }
+    
+    public async Task<List<string>> GetFavoritesAsync(Guid userId)
+    {
+        var favorites = await _context.Favorites
+            .Where(f => f.UserId == userId)
+            .Select(f => f.Word)
+            .ToListAsync();
+
+        return favorites;
     }
 }

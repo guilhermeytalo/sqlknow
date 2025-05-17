@@ -6,4 +6,7 @@ public interface IDictionaryService
 {
     Task<List<DictionaryEntryDto>> GetwordDefinitionAsync(string word, Guid userId);
     Task<DictionarySearchResponseDto> SearchWordsAsync(string search, int limit, int page);
+    Task AddToFavoritesAsync(string word, Guid userId);
+    Task RemoveFromFavoritesAsync(string word, Guid userId);
+    Task<List<string>> GetFavoritesAsync(Guid userId);
 }

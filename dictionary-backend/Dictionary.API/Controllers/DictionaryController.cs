@@ -48,4 +48,53 @@ public class DictionaryController : ControllerBase
             return BadRequest(new { message = "Error retrieving entries", error = ex.Message });
         }
     }
+    
+    [HttpGet("en/favorites")]
+    public async Task<IActionResult> GetFavorites()
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var favorites = await _dictionaryService.GetFavoritesAsync(userId);
+            return Ok(favorites);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Error retrieving favorites", error = ex.Message });
+        }
+    }
+    
+    [HttpPost("en/{word}/favorite")]
+    public async Task<IActionResult> AddToFavorites(
+        string word
+    )
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            await _dictionaryService.AddToFavoritesAsync(word, userId);
+            return Ok(new { message = "Word added to favorites" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Error adding word to favorites", error = ex.Message });
+        }
+    }
+    
+    [HttpDelete("en/{word}/favorite")]
+    public async Task<IActionResult> RemoveFromFavorites(
+        string word
+    )
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            await _dictionaryService.RemoveFromFavoritesAsync(word, userId);
+            return Ok(new { message = "Word removed from favorites" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Error removing word from favorites", error = ex.Message });
+        }
+    }
 }
