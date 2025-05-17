@@ -1,5 +1,3 @@
-.env
-Dictionary.API/bin
 ## .NET ##
 **/[Bb]in/
 **/[Oo]bj/
@@ -9,4 +7,3 @@ Dictionary.API/bin
 *.swp
 .env
 .env.local
-
