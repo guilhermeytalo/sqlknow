@@ -80,14 +80,16 @@ docker exec -it dictionary-postgres psql -U postgres -c "CREATE USER postgres WI
 ```
 
 # 🔌 Connection Issues
-From host machine: Use localhost:5433
+From host machine: Use localhost:5432
 
-Between containers: Use db:5432
+Between containers: Use db:5433
 
 # 🧹 Reset Everything
 ```bash
 docker-compose down -v  # Removes containers AND volumes
 docker-compose up -d    # Fresh start
+```
+
 📂 File Structure
 ```
 dictionary-backend/
