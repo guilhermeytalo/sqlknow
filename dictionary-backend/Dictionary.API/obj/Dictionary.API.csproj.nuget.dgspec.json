@@ -1,0 +1,79 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.API/Dictionary.API.csproj": {}
+  },
+  "projects": {
+    "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.API/Dictionary.API.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.API/Dictionary.API.csproj",
+        "projectName": "Dictionary.API",
+        "projectPath": "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.API/Dictionary.API.csproj",
+        "packagesPath": "/Users/guilhermeytalo/.nuget/packages/",
+        "outputPath": "/Users/guilhermeytalo/Dev/test/sqlknow/dictionary-backend/Dictionary.API/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/guilhermeytalo/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[8.0.13, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.6.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/guilhermeytalo/.dotnet/sdk/8.0.406/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

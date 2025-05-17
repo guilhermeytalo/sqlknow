@@ -1,0 +1,46 @@
+﻿services:
+  db:
+    image: postgres:16
+    container_name: dictionary-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dictionarydb
+    ports:
+      - "5433:5432"  # External:5433 -> Internal:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - dictionary-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dictionarydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dictionary.API/Dockerfile
+    container_name: dictionary-api
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production  # Changed to Production
+      - ConnectionStrings__Default=Host=db;Port=5432;Database=dictionarydb;Username=postgres;Password=postgres
+    env_file:
+      - Dictionary.API/.env.prod
+    ports:
+      - "8080:8080"
+    networks:
+      - dictionary-network
+
+volumes:
+  pgdata:
+
+networks:
+  dictionary-network:
+    driver: bridge

@@ -1,0 +1,12 @@
+.env
+Dictionary.API/bin
+## .NET ##
+**/[Bb]in/
+**/[Oo]bj/
+*.user
+*.suo
+*.cache
+*.swp
+.env
+.env.local
+
