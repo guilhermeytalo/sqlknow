@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import api from '../../lib/api';
+import Link from 'next/link';
 
 export default function DictionaryPage() {
   const [words, setWords] = useState<string[]>([]);
@@ -10,11 +11,13 @@ export default function DictionaryPage() {
   }, []);
 
   return (
-    <div className="max-w-2xl mx-auto mt-10">
-      <h1 className="text-2xl mb-4">Palavras</h1>
+    <div className="max-w-2xl mx-auto mt-10 p-4">
+      <h1 className="text-2xl mb-4">Dicionário</h1>
       <ul className="list-disc pl-5">
         {words.map(word => (
-          <li key={word}>{word}</li>
+          <li key={word}>
+            <Link href={`/dictionary/${word}`}>{word}</Link>
+          </li>
         ))}
       </ul>
     </div>
