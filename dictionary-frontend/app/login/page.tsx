@@ -10,10 +10,10 @@ import React, { useActionState } from 'react';
 
 type LoginState = {
     success: boolean;
-    error: string | null;
+    error: string | undefined;
 };
 
-const initialState: LoginState = { success: false, error: null };
+const initialState: LoginState = { success: false, error: undefined };
 
 export default function LoginPage() {
     const [state, formAction] = useActionState(loginAction, initialState);

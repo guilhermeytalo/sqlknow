@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { serverApi } from '../lib/api';
+import { serverApi } from '@/infra/http/api';
 
 export interface AuthState {
   success: boolean;
@@ -17,14 +17,12 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
       return { success: false, error: 'Email e senha são obrigatórios' };
     }
 
-    console.log('Tentando login com:', { email, password: '***' });
 
     const response = await serverApi.post('/auth/signin', {
       email,
       password
     });
 
-    console.log('Resposta do login:', response.data);
 
     const token = response.data.response?.token || response.data.token;
 
@@ -32,7 +30,7 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
       return { success: false, error: 'Token não recebido do servidor' };
     }
 
-    cookies().set({
+    (await cookies()).set({
       name: 'token',
       value: token,
       httpOnly: true,
@@ -58,6 +56,7 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
   }
 }
 
+//TODO: Implementar tela + logout
 export async function registerAction(_: AuthState, formData: FormData): Promise<AuthState> {
   try {
     const name = formData.get('name')?.toString();
@@ -68,15 +67,11 @@ export async function registerAction(_: AuthState, formData: FormData): Promise<
       return { success: false, error: 'Todos os campos são obrigatórios' };
     }
 
-    console.log('Tentando registro com:', { name, email, password: '***' });
-
     const response = await serverApi.post('/auth/signup', {
       name,
       email,
       password
     });
-
-    console.log('Resposta do registro:', response.data);
 
     return { success: true };
   } catch (error: any) {
