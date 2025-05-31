@@ -22,6 +22,11 @@ var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ??
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ??
                   builder.Configuration["Jwt:Audience"];
 
+
+Console.WriteLine($"JWT_KEY loaded: {(!string.IsNullOrEmpty(jwtKey) ? "YES" : "NO")}");
+Console.WriteLine($"JWT_ISSUER: {jwtIssuer}");
+Console.WriteLine($"JWT_AUDIENCE: {jwtAudience}");
+
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new InvalidOperationException(

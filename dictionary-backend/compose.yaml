@@ -28,11 +28,10 @@
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production  # Changed to Production
-      - ConnectionStrings__Default=Host=db;Port=5432;Database=dictionarydb;Username=postgres;Password=postgres
     env_file:
-      - Dictionary.API/.env.prod
+      - Dictionary.API/.env
+    environment:
+      - ConnectionStrings__Default=Host=db;Port=5432;Database=dictionarydb;Username=postgres;Password=postgres
     ports:
       - "8080:8080"
     networks:
