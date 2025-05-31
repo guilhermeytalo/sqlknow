@@ -4,8 +4,8 @@ import { WordsRepository } from "@/infra/http/repositories/WordsRepository";
 
 const repository = new WordsRepository();
 
-export async function getWord() {
-  const response: ApiResponse<Words> = await repository.findAllWords();
+export async function getWord(page = 1, limit = 50) {
+  const response: ApiResponse<Words> = await repository.findAllWords(page, limit);
 
   if (!response.success || !response.data) {
     throw new Error('Failed to fetch words');

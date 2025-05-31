@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
 
-export function middleware(request: NextRequest) {
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+
+export async function middleware(request: NextRequest) {
     if (
         request.nextUrl.pathname.startsWith('/_next/') ||
         request.nextUrl.pathname.startsWith('/api/') ||
@@ -15,6 +18,17 @@ export function middleware(request: NextRequest) {
     const isAuthRoute = ['/login', '/register'].some(path => 
         request.nextUrl.pathname.startsWith(path)
     );
+
+    if (token) {
+        try {
+            await jwtVerify(token, SECRET);
+        } catch (error) {
+            console.error(error);
+            const response = NextResponse.redirect(new URL('/login', request.url));
+            response.cookies.delete('token');
+            return response;
+        }
+    }
 
     if (!token && !isAuthRoute) {
         return NextResponse.redirect(new URL('/login', request.url));
