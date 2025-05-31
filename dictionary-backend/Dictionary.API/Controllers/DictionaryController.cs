@@ -82,4 +82,22 @@ public class DictionaryController : ControllerBase
             return BadRequest(new { message = "Error removing word from favorites", error = ex.Message });
         }
     }
+
+    [HttpGet("en/favorites")]
+    public async Task<IActionResult> GetFavorites(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
+    )
+    {
+        try
+        {
+            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var favorites = await _dictionaryService.GetFavoritesAsync(userId, page, pageSize);
+            return Ok(favorites);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Error retrieving favorites", error = ex.Message });
+        }
+    }
 }

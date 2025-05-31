@@ -31,27 +31,14 @@ public class DictionaryService : IDictionaryService
         if (!response.IsSuccessStatusCode)
             return new List<DictionaryEntryDto>();
         
-
         var content = await response.Content.ReadAsStringAsync();
         var definition = JsonConvert.DeserializeObject<List<DictionaryEntryDto>>(content);
         
-        var alreadyViewed = await _context.WordHistories
-            .AnyAsync(h => h.UserId == userId && h.Word == word);
-
-        if (!alreadyViewed)
-        {
-            _context.WordHistories.Add(new WordHistory
-            {
-                Word = word,
-                UserId = userId,
-                ViewedAt = DateTime.UtcNow,
-            });
-            await _context.SaveChangesAsync();
-        }
+        await AddToHistoryAsync(word, userId);
 
         return definition ?? new List<DictionaryEntryDto>();
-
     }
+
     public async Task<DictionarySearchResponseDto> SearchWordsAsync(string search, int limit, int page) {
         var query = _context.Words.AsQueryable();
 
@@ -122,16 +109,56 @@ public class DictionaryService : IDictionaryService
         var favorites = await query
             .Skip(skip)
             .Take(pageSize)
-            .Select(f => new 
-            {
-                word = f.Word,
-                added = f.AddedAt
-            })
+            .Select(f => f.Word)
             .ToListAsync();
 
         return new DictionarySearchResponseDto
         {
-            Results = favorites.Select(f => f.word).ToList(),
+            Results = favorites,
+            TotalDocs = totalDocs,
+            Page = page,
+            TotalPages = totalPages,
+            HasNext = page < totalPages,
+            HasPrev = page > 1
+        };
+    }
+
+    public async Task AddToHistoryAsync(string word, Guid userId)
+    {
+        var history = new WordHistory
+        {
+            Word = word,
+            UserId = userId,
+            ViewedAt = DateTime.UtcNow
+        };
+
+        _context.WordHistories.Add(history);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<WordHistoryResponseDto> GetHistoryAsync(Guid userId, int page, int pageSize)
+    {
+        var query = _context.WordHistories
+            .Where(h => h.UserId == userId)
+            .OrderByDescending(h => h.ViewedAt);
+
+        var totalDocs = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalDocs / (double)pageSize);
+        var skip = (page - 1) * pageSize;
+
+        var history = await query
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(h => new WordHistoryDto
+            {
+                Word = h.Word,
+                ViewedAt = h.ViewedAt
+            })
+            .ToListAsync();
+
+        return new WordHistoryResponseDto
+        {
+            Results = history,
             TotalDocs = totalDocs,
             Page = page,
             TotalPages = totalPages,

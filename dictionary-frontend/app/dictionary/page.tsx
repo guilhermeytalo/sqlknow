@@ -15,6 +15,15 @@ interface FavoriteResponse {
   results: Array<{ word: string }>;
 }
 
+interface HistoryResponse {
+  results: Array<{ word: string; viewedAt: string }>;
+  totalDocs: number;
+  page: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export default function DictionaryPage() {
   const [words, setWords] = useState<Words | null>(null);
   const [page, setPage] = useState(1);
@@ -24,6 +33,10 @@ export default function DictionaryPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [history, setHistory] = useState<{ word: string; viewedAt: string }[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
 
   const fetchWords = async (pageNum = 1) => {
     const response = await getWord(pageNum, 50);
@@ -40,18 +53,34 @@ export default function DictionaryPage() {
   useEffect(() => {
     fetchWords(1);
     fetchFavorites();
+    fetchHistory();
   }, []);
 
   const fetchFavorites = async () => {
     try {
       setLoadingFavorites(true);
-      const response = await api.get<FavoriteResponse>('/user/me/favorites');
+      const response = await api.get<FavoriteResponse>('/user/me/favorites?page=1&pageSize=50');
       setFavorites(response.data.results.map(f => f.word));
     } catch (error) {
       console.error('Error fetching favorites:', error);
       toast.error('Erro ao carregar favoritos');
     } finally {
       setLoadingFavorites(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const response = await api.get<HistoryResponse>(`/user/me/history?page=${historyPage}&pageSize=50`);
+      setHistory(prev => [...prev, ...response.data.results]);
+      setHasMoreHistory(response.data.hasNext);
+      setHistoryPage(prev => prev + 1);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast.error('Erro ao carregar histórico');
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -123,9 +152,10 @@ export default function DictionaryPage() {
       </Card>
 
       <Tabs defaultValue="wordlist">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="wordlist">Word List</TabsTrigger>
           <TabsTrigger value="favorites">Favorites</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         <TabsContent value="wordlist">
           <Card>
@@ -175,6 +205,42 @@ export default function DictionaryPage() {
                       {word}
                     </span>
                   ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="history">
+          <Card>
+            <CardContent className="space-y-2">
+              {loadingHistory ? (
+                <div className="text-center">Carregando histórico...</div>
+              ) : history.length === 0 ? (
+                <div className="text-center text-gray-500">Nenhum histórico</div>
+              ) : (
+                <div
+                  id="scrollableHistory"
+                  className="h-[300px] overflow-y-auto pr-2"
+                >
+                  <InfiniteScroll
+                    dataLength={history.length}
+                    next={fetchHistory}
+                    hasMore={hasMoreHistory}
+                    loader={<h4 className="text-center py-2">Loading...</h4>}
+                    scrollableTarget="scrollableHistory"
+                  >
+                    <div className="grid grid-cols-5 gap-2">
+                      {history.map((item) => (
+                        <span
+                          key={item.viewedAt}
+                          className={selectedWord === item.word ? 'font-bold underline cursor-pointer' : 'cursor-pointer'}
+                          onClick={() => handleWordClick(item.word)}
+                        >
+                          {item.word}
+                        </span>
+                      ))}
+                    </div>
+                  </InfiniteScroll>
                 </div>
               )}
             </CardContent>

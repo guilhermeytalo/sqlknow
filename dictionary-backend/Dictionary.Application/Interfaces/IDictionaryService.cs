@@ -9,4 +9,6 @@ public interface IDictionaryService
     Task AddToFavoritesAsync(string word, Guid userId);
     Task RemoveFromFavoritesAsync(string word, Guid userId);
     Task<DictionarySearchResponseDto> GetFavoritesAsync(Guid userId, int page, int pageSize);
+    Task AddToHistoryAsync(string word, Guid userId);
+    Task<WordHistoryResponseDto> GetHistoryAsync(Guid userId, int page, int pageSize);
 }
