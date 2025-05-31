@@ -4,25 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WordDetails } from "@/components/WordDetails";
 import { WordDetail } from '@/domain/entities/WordDetail';
 import { Words } from '@/domain/entities/Words';
-import { getWord } from '@/domain/services/WordsService';
-import api from '@/infra/http/api';
-import { WordsRepository } from '@/infra/http/repositories/WordsRepository';
+import { getFavorites, getHistory, toggleFavorite as toggleFavoriteService } from '@/domain/services/UserDataService';
+import { getWord, getWordByName } from '@/domain/services/WordsService';
 import { useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { toast } from "sonner";
-
-interface FavoriteResponse {
-  results: Array<{ word: string }>;
-}
-
-interface HistoryResponse {
-  results: Array<{ word: string; viewedAt: string }>;
-  totalDocs: number;
-  page: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
 
 export default function DictionaryPage() {
   const [words, setWords] = useState<Words | null>(null);
@@ -50,17 +36,11 @@ export default function DictionaryPage() {
     setHasMore(response.hasNext ?? false);
   };
 
-  useEffect(() => {
-    fetchWords(1);
-    fetchFavorites();
-    fetchHistory();
-  }, []);
-
   const fetchFavorites = async () => {
     try {
       setLoadingFavorites(true);
-      const response = await api.get<FavoriteResponse>('/user/me/favorites?page=1&pageSize=50');
-      setFavorites(response.data.results.map(f => f.word));
+      const favoriteWords = await getFavorites();
+      setFavorites(favoriteWords);
     } catch (error) {
       console.error('Error fetching favorites:', error);
       toast.error('Erro ao carregar favoritos');
@@ -72,9 +52,9 @@ export default function DictionaryPage() {
   const fetchHistory = async () => {
     try {
       setLoadingHistory(true);
-      const response = await api.get<HistoryResponse>(`/user/me/history?page=${historyPage}&pageSize=50`);
-      setHistory(prev => [...prev, ...response.data.results]);
-      setHasMoreHistory(response.data.hasNext);
+      const { results, hasNext } = await getHistory(historyPage);
+      setHistory(prev => [...prev, ...results]);
+      setHasMoreHistory(hasNext);
       setHistoryPage(prev => prev + 1);
     } catch (error) {
       console.error('Error fetching history:', error);
@@ -86,12 +66,13 @@ export default function DictionaryPage() {
 
   const toggleFavorite = async (word: string) => {
     try {
-      if (favorites.includes(word)) {
-        await api.delete(`/entries/en/${word}/favorite`);
+      const isFavorite = favorites.includes(word);
+      await toggleFavoriteService(word, isFavorite);
+
+      if (isFavorite) {
         setFavorites(prev => prev.filter(w => w !== word));
         toast.success('Palavra removida dos favoritos');
       } else {
-        await api.post(`/entries/en/${word}/favorite`);
         setFavorites(prev => [...prev, word]);
         toast.success('Palavra adicionada aos favoritos');
       }
@@ -124,13 +105,22 @@ export default function DictionaryPage() {
     setLoadingDetail(true);
     setWordDetail(null);
     try {
-      const repo = new WordsRepository();
-      const response = await repo.findWordByName(word);
-      setWordDetail(response.data?.[0] || null);
-    } finally {
+      const detail = await getWordByName(word)
+      setWordDetail(detail);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar detalhes da palavra")
+    }
+    finally {
       setLoadingDetail(false);
     }
   };
+
+  useEffect(() => {
+    fetchWords(1);
+    fetchFavorites();
+    fetchHistory();
+  }, []);
 
   const renderWordDetails = () => {
     return (

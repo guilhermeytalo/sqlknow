@@ -6,7 +6,7 @@ import api from "@/infra/http/api";
 
 
 export class WordsRepository implements IWordsRepository {
-    async findAllWords(page = 1, limit = 25): Promise<ApiResponse<Words>> {
+    async findAllWords(page = 1, limit = 50): Promise<ApiResponse<Words>> {
         try {
             const response = await api.get(`/entries/en?page=${page}&limit=${limit}`);
             return { success: true, data: response.data };

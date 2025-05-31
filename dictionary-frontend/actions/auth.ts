@@ -55,7 +55,6 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
   }
 }
 
-//TODO: Implementar tela + logout
 export async function registerAction(_: AuthState, formData: FormData): Promise<AuthState> {
   try {
     const name = formData.get('name')?.toString();
