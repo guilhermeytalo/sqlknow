@@ -34,19 +34,43 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("me/history")]
-    public async Task<IActionResult> GetHistory()
+    public async Task<IActionResult> GetHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!Guid.TryParse(userIdString, out var userId))
-            return Unauthorized("Invalid user ID");
+        try
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdString, out var userId))
+                return Unauthorized("Invalid user ID");
 
-        var history = await _context.WordHistories
-            .Where(h => h.UserId == userId)
-            .OrderByDescending(h => h.ViewedAt)
-            .Select(h => new { h.Word, h.ViewedAt })
-            .ToListAsync();
-        
-        return Ok(history);
+            var query = _context.WordHistories
+                .Where(h => h.UserId == userId)
+                .OrderByDescending(h => h.ViewedAt);
+
+            var totalDocs = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalDocs / (double)pageSize);
+            var hasNext = page < totalPages;
+            var hasPrev = page > 1;
+
+            var history = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(h => new { word = h.Word, viewedAt = h.ViewedAt })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                results = history,
+                totalDocs,
+                page,
+                totalPages,
+                hasNext,
+                hasPrev
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Error retrieving history", error = ex.Message });
+        }
     }
     
         

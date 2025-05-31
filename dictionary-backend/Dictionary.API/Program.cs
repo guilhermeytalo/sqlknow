@@ -22,6 +22,11 @@ var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ??
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ??
                   builder.Configuration["Jwt:Audience"];
 
+
+Console.WriteLine($"JWT_KEY loaded: {(!string.IsNullOrEmpty(jwtKey) ? "YES" : "NO")}");
+Console.WriteLine($"JWT_ISSUER: {jwtIssuer}");
+Console.WriteLine($"JWT_AUDIENCE: {jwtAudience}");
+
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new InvalidOperationException(
@@ -86,6 +91,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(jwtKey)
             )
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Cookies["token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -95,7 +114,7 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-// Log connection string (for debugging only - remove in production)
+
 var connectionString = builder.Configuration.GetConnectionString("Default");
 Console.WriteLine($"Using connection string: {connectionString}");
 
@@ -111,16 +130,29 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 
 var app = builder.Build();
 
-// Initialize the database with retries
+
 await InitializeDatabaseAsync(app);
 
+app.UseCors("AllowFrontend");
 app.UseSwagger();
-app.UseSwaggerUI(c => {
+app.UseSwaggerUI(c =>
+{
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dictionary API v1");
-    c.RoutePrefix = "swagger"; // Makes Swagger available at /swagger
+    c.RoutePrefix = "swagger";
 });
 
 app.UseHttpsRedirection();
@@ -131,17 +163,17 @@ app.MapControllers();
 
 app.Run();
 
-// Database initialization function with retry logic
+
 async Task InitializeDatabaseAsync(WebApplication app)
 {
-    // Define a retry policy for database operations
+
     var retryPolicy = Policy
         .Handle<NpgsqlException>()
         .Or<SocketException>()
         .WaitAndRetryAsync(
             retryCount: 5,
             sleepDurationProvider: retryAttempt =>
-                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // Exponential backoff
+                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
             onRetry: (exception, timeSpan, retryCount, context) =>
             {
                 Console.WriteLine(
@@ -153,15 +185,12 @@ async Task InitializeDatabaseAsync(WebApplication app)
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // Ensure database is created
         await dbContext.Database.EnsureCreatedAsync();
 
         Console.WriteLine("Database connected successfully, proceeding with initialization...");
 
-        // Seed the database
         DbInitializer.Seed(dbContext);
 
-        // Import words
         var importer = scope.ServiceProvider.GetRequiredService<WordImporterService>();
         await importer.ImportWordsAsync();
 
